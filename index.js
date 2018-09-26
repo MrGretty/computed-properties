@@ -3,7 +3,7 @@ function createSmartObj(obj) {
 
   Object.defineProperty(newObj, 'computed', {
     value: {},
-    enumerable: true,
+    enumerable: false,
     configurable: false,
     writable: true,
   });
@@ -14,8 +14,16 @@ function createSmartObj(obj) {
       configurable: true,
       get: () => this[key] || obj[key],
       set: value => {
+        const shallowCopyObj = {...newObj};
         this[key] = value;
-        Object.keys(newObj.computed).forEach(key => (newObj.computed[key] = newObj));
+
+        Object.keys(newObj.computed).forEach(computedKey => {
+          const property = Object.getOwnPropertyDescriptor(newObj.computed, computedKey);
+          if (((newObj.computed[computedKey].dependencyKeys.length && newObj.computed[computedKey].dependencyKeys.includes(key)) || !newObj.computed[computedKey].dependencyKeys.length)) {
+            property.set.call(this, shallowCopyObj, newObj, key)
+          }
+
+        });
       },
     });
   });
@@ -24,22 +32,36 @@ function createSmartObj(obj) {
 }
 
 function defineComputedField(obj, computeField, cb) {
+
   Object.defineProperty(obj.computed, `__${computeField}`, {
     enumerable: true,
     configurable: false,
-    get: () => this[`__${computeField}`] || cb(obj),
-    set: obj => cb(obj),
+    get: () => this[`__${computeField}`] || { dependencyKeys: [], value: cb(obj) },
+    set: (shallowCopyObj, newObj, dependencyKey) => {
+      const oldValue = cb(shallowCopyObj);
+      const newValue = cb(newObj);
+
+      if (oldValue === newValue || (oldValue !== oldValue && newValue !== newValue)) {
+        return;
+      }
+
+      return {
+        dependencyKeys: !this[`__${computeField}`] ? [] : this[`__${computeField}`].dependencyKeys.some(key => key === dependencyKey) ? this[`__${computeField}`].dependencyKeys : [dependencyKey, ...this[`__${computeField}`].dependencyKeys],
+        value: newValue
+      };
+    }
   });
 
   Object.defineProperty(obj, computeField, {
     enumerable: true,
     configurable: true,
-    get: () => obj.computed[`__${computeField}`],
+    get: () => obj.computed[`__${computeField}`].value,
     set: obj => {
       throw Error('error set');
     },
   });
 }
 
-const obj = createSmartObj({ firstName: 'John', lastName: 'Doe' });
+const obj = createSmartObj({ firstName: 'John', lastName: 'Doe', test: 'ss' });
 defineComputedField(obj, 'fullName', data => `${data.firstName} ${data.lastName}`);
+
