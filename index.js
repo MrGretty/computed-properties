@@ -12,7 +12,7 @@ function createSmartObj(obj) {
     Object.defineProperty(newObj, key, {
       enumerable: true,
       configurable: true,
-      get: () => this[key] || obj[key],
+      get: () => this[key] !== undefined? this[key] : obj[key],
       set: value => {
         const shallowCopyObj = { ...newObj };
         this[key] = value;
@@ -63,7 +63,8 @@ function defineComputedField(obj, computeField, cb) {
 }
 
 function _withComputed(sourceObj) {
-  if (!obj.computed) {
+
+  if (!sourceObj.computed) {
     console.error('object must contains COMPUTED property');
     return;
   }
@@ -81,20 +82,16 @@ function _withComputed(sourceObj) {
     defineComputedField(smartObject, computedProp, resourceObj => computed[computedProp](resourceObj))
   });
 
-  
-  this.sourceObj = smartObject;
+
+  return smartObject;
 }
 
-const obj = {
-  firstName: 'John',
-  lastName: 'Doe',
 
-  computed: {
-    fullName: (obj) => obj.firstName + obj.lastName
-  }
+if (typeof module !== 'undefined') {
+  module.exports = _withComputed;
 }
 
-_withComputed(obj);
+
 
 
 
