@@ -1,0 +1,15 @@
+{
+  "name": "simple computed properties",
+  "version": "0.8.0",
+  "description": "Simple computed properties (like in vue)",
+  "keywords": [
+    "properites",
+    "computed"
+  ],
+  "author": "MrGretty",
+  "repository": {
+    "type": "git",
+    "url": "git:github.com/MrGretty/computed-properties"
+  },
+  "license": "MIT"
+}

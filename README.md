@@ -1,6 +1,6 @@
 # Simple realization of computed properties in objects
 
-Spetial property in object `computed` wich recalculate 
+Special property in object `computed` wich recalculate 
 its own value only if its dependency(ies) field(s) changed 
 
 ## Example
