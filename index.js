@@ -12,9 +12,9 @@ function createSmartObj(obj) {
     Object.defineProperty(newObj, key, {
       enumerable: true,
       configurable: true,
-      get: () => this[key] || obj[key],
+      get: () => this[key] !== undefined? this[key] : obj[key],
       set: value => {
-        const shallowCopyObj = {...newObj};
+        const shallowCopyObj = { ...newObj };
         this[key] = value;
 
         Object.keys(newObj.computed).forEach(computedKey => {
@@ -62,6 +62,38 @@ function defineComputedField(obj, computeField, cb) {
   });
 }
 
-const obj = createSmartObj({ firstName: 'John', lastName: 'Doe', test: 'ss' });
-defineComputedField(obj, 'fullName', data => `${data.firstName} ${data.lastName}`);
+function _withComputed(sourceObj) {
+
+  if (!sourceObj.computed) {
+    console.error('object must contains COMPUTED property');
+    return;
+  }
+
+  let { computed, ...smartObject } = sourceObj;
+
+  if (typeof computed !== 'object') {
+    console.error('computed property must be an object');
+    return;
+  }
+
+  smartObject = createSmartObj(smartObject);
+
+  Object.keys(computed).forEach(computedProp => {
+    defineComputedField(smartObject, computedProp, resourceObj => computed[computedProp](resourceObj))
+  });
+
+
+  return smartObject;
+}
+
+
+if (typeof module !== 'undefined') {
+  module.exports = _withComputed;
+}
+
+
+
+
+
+
 
